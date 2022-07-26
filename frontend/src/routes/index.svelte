@@ -1,5 +1,11 @@
 <script>
 	import Title from '$lib/TitlePage.svelte';
+	import { goto } from '$app/navigation';
+
+	function logIn() {
+		alert('welcome');
+		goto('/authenticated/dashboard');
+	}
 </script>
 
 <main>
@@ -21,7 +27,10 @@
 			name="password"
 			placeholder="Password"
 		/>
-		<button class="w-1/5 border-2 bg-[#e5e5e5] rounded-md mx-auto hover:bg-slate-50">Login</button>
+		<button
+			on:click={logIn}
+			class="w-1/5 border-2 bg-[#e5e5e5] rounded-md mx-auto hover:bg-slate-50">Login</button
+		>
 		<p class="text-center mt-2 mb-8">
 			Dont Have Account? <a href="/register" class="text-[#0ea5e9] hover:text-[#3b82f6]"
 				>Register Here</a

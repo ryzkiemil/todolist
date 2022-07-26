@@ -2,11 +2,12 @@
 	import Modal from '$lib/Modal.svelte';
 	import Form from '$lib/Form.svelte';
 	import { onMount, afterUpdate, tick } from 'svelte';
+	import { flip } from 'svelte/animate';
 
 	$: tasks = [];
 	$: starred_task = [];
 
-	let tasks_test = [
+	let task_dataStore = [
 		{
 			id: 1,
 			name: 'Task 1',
@@ -40,7 +41,7 @@
 			description: 'task description 4',
 			task_master: 'task master 4',
 			task_start: '2022-07-20',
-			due_date: '2022-07-22',
+			due_date: '2022-07-25',
 			status: 0
 		},
 		{
@@ -57,34 +58,46 @@
 			name: 'Task 6',
 			description: 'task description 6',
 			task_master: 'task master 6',
-			task_start: '2022-07-01',
-			due_date: '2022-07-22',
+			task_start: '2022-07-27',
+			due_date: '2022-08-01',
+			status: 0
+		},
+		{
+			id: 7,
+			name: 'Task 7',
+			description: 'task description 7',
+			task_master: 'task master 7',
+			task_start: '2022-07-20',
+			due_date: '2022-07-24',
 			status: 0
 		}
 	];
 
 	onMount(async () => {
-		selectedDate = new Date();
-		let curDate = new Date();
-
-		(month = '' + (now.getMonth() + 1)), (day = '' + now.getDate()), (year = now.getFullYear());
-		if (month.length < 2) month = '0' + month;
-		if (day.length < 2) day = '0' + day;
-		selectedDate = [year, month, day].join('-');
-
-		tasks_test.forEach((item) => {
+		expiringItem();
+		task_dataStore.forEach((item) => {
 			if (!item['status']) {
-				curDate >= new Date(item['task_start']) ? (tasks = [item, ...tasks]) : '';
+				dateFormat() >= dateFormat(new Date(item['task_start'])) ? (tasks = [item, ...tasks]) : '';
 			}
 		});
 	});
 
 	afterUpdate(() => {
+		expiringItem();
 		tasks = tasks;
 		starred_task = starred_task;
-		tasks_test = tasks_test;
+		task_dataStore = task_dataStore;
 		selectedDate = selectedDate;
 	});
+
+	// format date to 'YYYY-MM-DD'
+	function dateFormat(date = new Date()) {
+		let month, day, year;
+		(month = '' + (date.getMonth() + 1)), (day = '' + date.getDate()), (year = date.getFullYear());
+		if (month.length < 2) month = '0' + month;
+		if (day.length < 2) day = '0' + day;
+		return [year, month, day].join('-');
+	}
 
 	function getDayCount(due_date) {
 		let curDate = new Date();
@@ -94,36 +107,43 @@
 		return Math.ceil((dueDate - curDate) / (1000 * 60 * 60 * 24));
 	}
 
-	async function starredElement(index) {
+	function starredElement(index) {
 		starred_task = [...starred_task, tasks.splice(index, 1)[0]];
 	}
 
-	async function unstarredElement(index) {
+	function unstarredElement(index) {
 		tasks = [...tasks, starred_task.splice(index, 1)[0]];
-		console.log(tasks);
 	}
 
-	async function updateShowTask() {
-		tasks_test.forEach((item) => {
-			if (!item['status']) {
-				selectedDate >= new Date(item['task_start']) ? (tasks = [item, ...tasks]) : '';
+	function expiringItem() {
+		task_dataStore.forEach((item) => {
+			if (item['status'] != 3) {
+				item['status'] = dateFormat() > dateFormat(new Date(item['due_date'])) ? 3 : item['status'];
 			}
 		});
 	}
 
-	async function taskFinish(index) {
+	function taskFinish(index) {
 		if (confirm('This task is complete?')) {
 			let indexPointer = tasks.splice(index, 1)[0]['id'];
 			tasks = [...tasks];
-			let finishTaskIndex = tasks_test.findIndex((item) => item.id === indexPointer);
-			tasks_test[finishTaskIndex].status = 1;
-			console.log(tasks_test);
+			let finishTaskIndex = task_dataStore.findIndex((item) => item.id === indexPointer);
+			task_dataStore[finishTaskIndex].status = 1;
 		}
 	}
 
-	console.log(tasks_test.slice(-1)[0].id);
+	function deleteTask(index) {
+		if (confirm('Remove this task?')) {
+			let indexPointer = tasks.splice(index, 1)[0]['id'];
+			tasks = [...tasks];
+			let deleteTaskIndex = task_dataStore.findIndex((item) => item.id === indexPointer);
+			task_dataStore[deleteTaskIndex].status = 4;
+		}
+	}
+
+	// console.log(task_dataStore.slice(-1)[0].id);
 	function addTask() {
-		let lastIndex = tasks_test.slice(-1)[0].id;
+		let lastIndex = task_dataStore.slice(-1)[0].id + 1;
 		let task = {
 			id: lastIndex,
 			name: task_name,
@@ -131,7 +151,7 @@
 			task_master: 'task master ' + lastIndex,
 			task_start: task_date_start,
 			due_date: task_due_date,
-			status: 1
+			status: 0
 		};
 
 		if (confirm('Are you sure to add this task?')) {
@@ -140,20 +160,34 @@
 		}
 		task_name = '';
 		task_description = '';
+		task_date_start = '';
 		task_due_date = '';
-		console.log(newTask);
+
+		tasks = [...tasks, task];
+		showModal_add = false;
+	}
+
+	function editTask(id) {
+		if (!confirm('Are you sure to udpate this task?')) {
+			return false;
+		}
+		let index = task_dataStore.findIndex((item) => item.id == id);
+		let task = task_dataStore.find((item) => item.id == id);
+		task_dataStore[index].name = task_name;
+		task_dataStore[index].description = task_description;
+		task_dataStore[index].task_date_start = task_date_start;
+		task_dataStore[index].task_due_date = task_due_date;
+		showModal_edit = false;
 	}
 
 	let selectedDate;
-	let now = new Date(),
-		month,
-		day,
-		year;
 	let showModal_detail = false;
 	let showModal_add = false;
+	let showModal_edit = false;
 	let description = '';
 
 	let newTask = [];
+	let task_id = '';
 	let task_name = '';
 	let task_description = '';
 	let task_date_start = '';
@@ -262,6 +296,87 @@
 		</span>
 	</Modal>
 {/if}
+{#if showModal_edit}
+	<Modal>
+		on:click = {() => {
+			showModal_edit = false;
+		}}
+		<span slot="title">
+			<h1>Update Task</h1>
+		</span>
+		<span slot="content">
+			<Form>
+				<span slot="field">
+					<div class="flex flex-col space-y-1 mb-3">
+						<div class="flex flex-col">
+							<label>Task Name</label>
+							<input
+								bind:value={task_name}
+								class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
+								type="text"
+								name="task_name"
+								id=""
+								placeholder="Your Task Name"
+								required
+							/>
+						</div>
+						<div class="flex flex-col">
+							<label>Task Description</label>
+							<input
+								bind:value={task_description}
+								class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
+								type="text"
+								name="task_description"
+								id=""
+								placeholder="Your Task Description"
+								required
+							/>
+						</div>
+					</div>
+					<div class="flex flex-col">
+						<label for="due_date">Task Due Date </label>
+						<input
+							bind:value={task_due_date}
+							class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
+							type="date"
+							name="due_date"
+							id=""
+							required
+						/>
+					</div>
+					<div class="flex flex-col">
+						<label for="due_date">Task Start Date </label>
+						<input
+							bind:value={task_date_start}
+							class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
+							type="date"
+							name="due_date"
+							id=""
+							required
+						/>
+					</div>
+				</span>
+				<span slot="button">
+					<button
+						on:click={editTask(task_id)}
+						class="border-2 bg-[#e5e5e5] rounded-md mx-auto hover:bg-slate-50 py-1 px-2"
+						>Update</button
+					>
+				</span>
+			</Form>
+		</span>
+		<span slot="button">
+			<button
+				on:click={() => {
+					showModal_edit = false;
+				}}
+				class="bg-pink-500 uppercase font-medium text-white py-1 px-3 rounded-md"
+			>
+				Cancel
+			</button>
+		</span>
+	</Modal>
+{/if}
 <div
 	class="container max-w-xl border-2 border-[#fde047] rounded-lg flex flex-col center mt-40 p-5 px-5 space-y-2"
 >
@@ -288,10 +403,25 @@
 	<div class="space-y-2">
 		{#each starred_task as task, i (task.id)}
 			<div class="flex flex-row w-full space-x-5">
-				<button class="hover:text-[#fb923c]">
+				<button
+					on:click={() => {
+						showModal_edit = true;
+						task_id = task.id;
+						task_name = task.name;
+						task_description = task.description;
+						task_due_date = task.due_date;
+						task_date_start = task.task_start;
+					}}
+					class="text-gray-800 hover:text-[#fb923c]"
+				>
 					<i class="fa-solid fa-pen" />
 				</button>
-				<button class="hover:text-[#dc2626]">
+				<button
+					on:click={() => {
+						deleteTask(i);
+					}}
+					class="text-gray-800 hover:text-[#dc2626]"
+				>
 					<i class="fa-solid fa-trash" />
 				</button>
 				<button
@@ -328,10 +458,25 @@
 	<div class="space-y-2">
 		{#each tasks as task, i (task.id)}
 			<div class="flex flex-row w-full space-x-5">
-				<button class="hover:text-[#fb923c]">
+				<button
+					on:click={() => {
+						showModal_edit = true;
+						task_id = task.id;
+						task_name = task.name;
+						task_description = task.description;
+						task_due_date = task.due_date;
+						task_date_start = task.task_start;
+					}}
+					class="text-gray-100 hover:text-[#fb923c]"
+				>
 					<i class="fa-solid fa-pen" />
 				</button>
-				<button class="hover:text-[#dc2626]">
+				<button
+					on:click={() => {
+						deleteTask(i);
+					}}
+					class="text-gray-100 hover:text-[#dc2626]"
+				>
 					<i class="fa-solid fa-trash" />
 				</button>
 				<button

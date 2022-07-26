@@ -25,38 +25,5 @@
 
 <div class="flex flex-col w-full bg-[#fef9c3] py-5 px-10 rounded-lg text-center space-y-5">
 	<slot name="field" />
-	<!-- <input
-		bind:value={task_name}
-		class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
-		type="text"
-		name="task_name"
-		id=""
-		placeholder="Your Task Name"
-		required
-	/>
-	<input
-		bind:value={task_description}
-		class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
-		type="text"
-		name="task_description"
-		id=""
-		placeholder="Your Task Description"
-		required
-	/>
-	<div class="flex flex-col">
-		<label for="due_date">Task Due Date: </label>
-		<input
-			bind:value={task_due_date}
-			class="border-2 border-rose-600 rounded-md px-2 py-1 mx-auto w-4/12"
-			type="date"
-			name="due_date"
-			id=""
-			required
-		/>
-	</div> -->
 	<slot name="button" />
-	<!-- <button
-		on:click={addTask}
-		class="border-2 bg-[#e5e5e5] rounded-md mx-auto hover:bg-slate-50 py-1 px-2">Add Task</button
-	> -->
 </div>
